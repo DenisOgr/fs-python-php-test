@@ -1,4 +1,4 @@
-elasticsearch_host: 0.0.0.0
+elasticsearch_host: elasticsearch
 elasticsearch_port: 9200
 
 elasticsearch_document_core: documents
