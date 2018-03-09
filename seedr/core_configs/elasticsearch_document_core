@@ -27,6 +27,9 @@
         "is_template": {
           "type": "boolean"
         },
+        "is_public": {
+          "type": "boolean"
+        },
         "message": {
           "type": "text"
         },
