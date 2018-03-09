@@ -5,6 +5,7 @@ from elasticsearch import Elasticsearch
 import random
 from collections import deque
 import time
+thread_count = 10
 cores = [
     'elasticsearch_document_core',
     'elasticsearch_form_contents_core',
@@ -17,10 +18,10 @@ with open("conf.yaml", 'r') as stream:
 es = Elasticsearch("%s:%s"%(conf['elasticsearch_host'], str(conf['elasticsearch_port'])))
 count_users = 10000
 count_organisations = 1000
-count_forms = 1000
-count_documents = 1000
-count_chats = 1000
-count_comments = 1000
+count_forms = 500000
+count_documents = 400000
+count_chats = 100000
+count_comments = 100000
 fake = Faker()
 
 #elasticsearch_form_contents_core
@@ -43,7 +44,7 @@ def seed_forms_generator(fake: Faker, index, count):
                 }
         }
 seedr = seed_forms_generator(fake, core, count_forms)
-deque(parallel_bulk(es, seedr), maxlen=0)
+deque(parallel_bulk(es, seedr, thread_count=thread_count), maxlen=0)
 time.sleep(1)
 print("Count documents in core '%s' = %s"%(core, es.count(index=core)['count']))
 
@@ -76,7 +77,7 @@ def seed_document_generator(fake: Faker, index, count, ):
 
 
 seedr = seed_document_generator(fake, core, count_documents)
-deque(parallel_bulk(es, seedr))
+deque(parallel_bulk(es, seedr, thread_count=thread_count))
 time.sleep(1)
 print("Count documents in core '%s' = %s"%(core, es.count(index=core)['count']))
 
@@ -103,7 +104,7 @@ def seed_comments_generator(fake: Faker, index, count):
 
 
 seedr = seed_comments_generator(fake, core, count_comments)
-deque(parallel_bulk(es, seedr))
+deque(parallel_bulk(es, seedr, thread_count=thread_count))
 time.sleep(1)
 print("Count documents in core '%s' = %s"%(core, es.count(index=core)['count']))
 
@@ -130,7 +131,7 @@ def seed_comments_generator(fake: Faker, index, count):
 
 
 seedr = seed_comments_generator(fake, core, count_chats)
-deque(parallel_bulk(es, seedr), maxlen=0)
+deque(parallel_bulk(es, seedr, thread_count=thread_count), maxlen=0)
 time.sleep(1)
 print("Count documents in core '%s' = %s"%(core, es.count(index=core)['count']))
 
