@@ -1,4 +1,4 @@
-version: '2.2'
+version: '3.1'
 services:
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:6.2.2
@@ -38,14 +38,22 @@ services:
     build: ./seedr
     restart: always
     tty: true
-    ports:
-      - 65:80
     links:
       - elasticsearch
     volumes:
       - ./seedr:/app
     networks:
       - esnet
+  python_client:
+    build: ./python-client
+    restart: always
+    tty: true
+    ports:
+      - 65:80
+    links:
+      - elasticsearch
+    volumes:
+      - .:/app
 volumes:
   esdata1:
     driver: local
