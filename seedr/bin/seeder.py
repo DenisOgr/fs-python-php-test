@@ -16,12 +16,14 @@ with open("conf.yaml", 'r') as stream:
     conf = yaml.load(stream)
 
 es = Elasticsearch("%s:%s"%(conf['elasticsearch_host'], str(conf['elasticsearch_port'])))
-count_users = 10000
-count_organisations = 1000
-count_forms = 500000
-count_documents = 400000
-count_chats = 100000
-count_comments = 100000
+
+count_users = conf['count_users']
+count_organisations = conf['count_organisations']
+count_forms = conf['count_forms']
+count_documents = conf['count_documents']
+count_chats = conf['count_chats']
+count_comments = conf['count_comments']
+
 fake = Faker()
 
 #elasticsearch_form_contents_core
@@ -71,7 +73,9 @@ def seed_document_generator(fake: Faker, index, count, ):
                 "message": fake.paragraph(nb_sentences=6),
                 "signer_email": fake.company_email(),
                 "inviter2sign_email": fake.company_email(),
-                "is_template": True
+                "is_template": True,
+                "is_public": random.choice([True, False]),
+
             }
     }
 

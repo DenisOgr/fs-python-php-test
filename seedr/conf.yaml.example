@@ -6,4 +6,11 @@ elasticsearch_form_contents_core: form_contents
 elasticsearch_comments_core: comments
 elasticsearch_chats_core: chats
 
+count_users: 1000
+count_organisations: 1000
+count_forms: 1000
+count_documents: 1000
+count_chats: 1000
+count_comments: 1000
+
 
