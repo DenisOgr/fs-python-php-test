@@ -1,0 +1,9 @@
+elasticsearch_host: elasticsearch
+elasticsearch_port: 9200
+
+elasticsearch_document_core: documents
+elasticsearch_form_contents_core: form_contents
+elasticsearch_comments_core: comments
+elasticsearch_chats_core: chats
+
+

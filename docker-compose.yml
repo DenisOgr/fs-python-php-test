@@ -33,7 +33,19 @@ services:
       - esdata2:/usr/share/elasticsearch/data
     networks:
       - esnet
-
+  seedr:
+    container_name: seedr
+    build: ./seedr
+    restart: always
+    tty: true
+    ports:
+      - 65:80
+    links:
+      - elasticsearch
+    volumes:
+      - ./seedr:/app
+    networks:
+      - esnet
 volumes:
   esdata1:
     driver: local
