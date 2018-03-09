@@ -1,0 +1,27 @@
+{
+"mappings" : {
+    "_doc":{
+      "properties": {
+        "form_id": {
+          "type": "integer"
+        },
+        "title": {
+          "type": "text"
+        },
+        "description": {
+          "type": "text"
+        },
+        "date_create": {
+          "type": "date",
+          "format": "yyyy-MM-dd"
+        },
+        "is_fillable": {
+          "type": "boolean"
+        },
+        "content": {
+          "type": "text"
+        }
+        }
+        }
+    }
+}

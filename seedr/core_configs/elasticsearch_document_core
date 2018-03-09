@@ -1,0 +1,42 @@
+{
+"mappings" : {
+    "_doc":{
+      "properties": {
+        "form_id": {
+          "type": "integer"
+        },
+        "project_id": {
+          "type": "integer"
+        },
+         "user_id": {
+          "type": "integer"
+        },
+        "organisation_id": {
+          "type": "integer"
+        },
+        "file_name": {
+          "type": "text"
+        },
+        "file_type": {
+          "type": "text"
+        },
+        "date_create": {
+          "type": "date",
+          "format": "yyyy-MM-dd"
+        },
+        "is_template": {
+          "type": "boolean"
+        },
+        "message": {
+          "type": "text"
+        },
+        "signer_email": {
+          "type": "text"
+        },
+        "inviter2sign_email": {
+          "type": "text"
+         }
+        }
+        }
+    }
+}
