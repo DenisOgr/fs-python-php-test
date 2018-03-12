@@ -13,6 +13,7 @@ class Worker:
         return Elasticsearch([{'host': env.ELASTIC_HOST, 'port': env.ELASTIC_PORT}])
 
     def get_user_documents(self, elastic, user_id, index, doc_type, q):
+        print(time.time())
         query = {
             'query': {
                 'match': {
@@ -26,6 +27,8 @@ class Worker:
         q.put(documents)
 
     def get_user_documents_by_title(self, elastic, user_id, query, index, doc_type, q):
+        print(time.time())
+        time.sleep(2)
         query = {
             'query': {
                 'bool': {
@@ -98,6 +101,7 @@ class Worker:
         return self._get_documents(elastic, index, doc_type, query, 'project_id')
 
     def get_public_documents(self, elastic, index, doc_type, queue, user_id, query, organisation_id):
+        print(time.time())
         query = {
             'query': {
                 'bool': {
@@ -132,6 +136,7 @@ class Worker:
         queue.put(documents)
 
     def get_user_comments(self, elastic, index, doc_type, queue, user_id, query):
+        print(time.time())
         query = {
             'query': {
                 'bool': {
@@ -159,6 +164,7 @@ class Worker:
         queue.put(results)
 
     def get_user_chats(self, elastic, index, doc_type, queue, user_id, query):
+        print(time.time())
         query = {
             'query': {
                 'bool': {
@@ -232,9 +238,6 @@ class Worker:
                                              elastic, user_id, title, env.ELASTIC_DOCUMENTS_INDEX, env.ELASTIC_CORE,
                                              documents_by_title_queue,))
         documents_by_title_process.start()
-        documents_by_title_process.join()
-        documents_by_title = documents_by_title_queue.get()
-
         # user documents by user_id
 
         documents_queue = Queue()
@@ -242,9 +245,6 @@ class Worker:
                                     args=(
                                     elastic, user_id, env.ELASTIC_DOCUMENTS_INDEX, env.ELASTIC_CORE, documents_queue,))
         documents_process.start()
-        documents_process.join()
-        documents = documents_queue.get()
-
         # public documents by org_id , query and user_id
 
         public_documents_queue = Queue()
@@ -253,9 +253,6 @@ class Worker:
                                                  public_documents_queue,
                                                  user_id, title, organisation_id))
         public_documents_process.start()
-        public_documents_process.join()
-
-        public_documents = public_documents_queue.get()
 
         # user comments by user_id and query
         comments_queue = Queue()
@@ -263,9 +260,6 @@ class Worker:
                                    args=(elastic, env.ELASTIC_COMMENTS_INDEX, env.ELASTIC_CORE, comments_queue, user_id,
                                          title))
         comments_process.start()
-        comments_process.join()
-
-        comments = comments_queue.get()
 
         # user chats by user_id and query
         chats_queue = Queue()
@@ -274,7 +268,19 @@ class Worker:
                                 elastic, env.ELASTIC_CHATS_INDEX, env.ELASTIC_CORE, chats_queue, user_id, title))
 
         chats_process.start()
+
+        # run joins
+        documents_by_title_process.join()
+        documents_process.join()
+        public_documents_process.join()
+        comments_process.join()
         chats_process.join()
+
+        #get results
+        documents_by_title = documents_by_title_queue.get()
+        documents = documents_queue.get()
+        public_documents = public_documents_queue.get()
+        comments = comments_queue.get()
         chats = chats_queue.get()
 
         user_form_content = self.get_user_form_content(elastic, documents, title, env.ELASTIC_FORMS_INDEX, env.ELASTIC_CORE)
