@@ -13,7 +13,6 @@ class Worker:
         return Elasticsearch([{'host': env.ELASTIC_HOST, 'port': env.ELASTIC_PORT}])
 
     def get_user_documents(self, elastic, user_id, index, doc_type, q):
-        print(time.time())
         query = {
             'query': {
                 'match': {
@@ -27,7 +26,6 @@ class Worker:
         q.put(documents)
 
     def get_user_documents_by_title(self, elastic, user_id, query, index, doc_type, q):
-        print(time.time())
         query = {
             'query': {
                 'bool': {
@@ -100,7 +98,6 @@ class Worker:
         return self._get_documents(elastic, index, doc_type, query, 'project_id')
 
     def get_public_documents(self, elastic, index, doc_type, queue, user_id, query, organisation_id):
-        print(time.time())
         query = {
             'query': {
                 'bool': {
@@ -135,7 +132,6 @@ class Worker:
         queue.put(documents)
 
     def get_user_comments(self, elastic, index, doc_type, queue, user_id, query):
-        print(time.time())
         query = {
             'query': {
                 'bool': {
@@ -163,7 +159,6 @@ class Worker:
         queue.put(results)
 
     def get_user_chats(self, elastic, index, doc_type, queue, user_id, query):
-        print(time.time())
         query = {
             'query': {
                 'bool': {
