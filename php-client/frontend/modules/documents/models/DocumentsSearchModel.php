@@ -3,6 +3,7 @@
 namespace frontend\modules\documents\models;
 
 use frontend\models\AbstractSearch;
+use GuzzleHttp\Client;
 use yii\helpers\ArrayHelper;
 use Exception;
 
@@ -10,9 +11,9 @@ class DocumentsSearchModel extends AbstractSearch
 {
     public function search(array $params): array
     {
+        $params['user_id']         = (empty($params['user_id']))? rand(0, \Yii::$app->params['random']['user_id']) : $params['user_id'];
+        $params['organization_id'] = (empty($params['organisation_id'])) ? rand(0, \Yii::$app->params['random']['organisation_id']) : $params['organisation_id'];
         // FORMS 1
-        /** @var \yii\elasticsearch\Connection $el */
-        $el     = \Yii::$app->get('elasticsearch');
         $config = [
             'query' => [
                 'bool' => [
@@ -24,19 +25,18 @@ class DocumentsSearchModel extends AbstractSearch
                         ],
                         [
                             'match' => [
-                                'organization_id' => $params['organization_id']
+                                'organisation_id' => $params['organization_id']
                             ]
                         ]
                     ]
                 ]
             ]
         ];
-        $elResult = $el->post('documents/_search', [], json_encode($config));
+        $elResult = $this->request('documents/_search', $config);
         if (empty($elResult)) {
             throw new Exception('Response not eq array');
         }
         $forms1 = $this->get($elResult, 'form_id');
-
         // PROJECTS 1
         $config = [
             'query' => [
@@ -49,12 +49,12 @@ class DocumentsSearchModel extends AbstractSearch
                         ],
                         [
                             'match' => [
-                                'organization_id' => $params['organization_id']
+                                'organisation_id' => $params['organization_id']
                             ]
                         ],
                         [
                             'more_like_this' => [
-                                'fields' => ['title'],
+                                'fields' => ['file_name'],
                                 'like'   => [$params['search']],
                                 'min_term_freq' => 1,
                                 'min_doc_freq' => 1
@@ -64,7 +64,7 @@ class DocumentsSearchModel extends AbstractSearch
                 ]
             ]
         ];
-        $elResult = $el->post('documents/_search', [], json_encode($config));
+        $elResult = $this->request('documents/_search', $config);
         if (empty($elResult)) {
             throw new Exception('Response not eq array');
         }
@@ -78,7 +78,7 @@ class DocumentsSearchModel extends AbstractSearch
                     'must' => [
                         [
                             'more_like_this' => [
-                                'fields' => ['title'],
+                                'fields' => ['description'],
                                 'like'   => [$params['search']],
                                 'min_term_freq' => 1,
                                 'min_doc_freq' => 1
@@ -93,7 +93,7 @@ class DocumentsSearchModel extends AbstractSearch
                 ]
             ]
         ];
-        $elResult = $el->post('form_content/_search', [], json_encode($config));
+        $elResult = $this->request('form_contents/_search', $config);
         if (empty($elResult)) {
             throw new Exception('Response not eq array');
         }
@@ -110,7 +110,7 @@ class DocumentsSearchModel extends AbstractSearch
                         ],
                         [
                             'match' => [
-                                'organization_id' => $params['organization_id']
+                                'organisation_id' => $params['organization_id']
                             ]
                         ],
                         [
@@ -122,12 +122,77 @@ class DocumentsSearchModel extends AbstractSearch
                 ]
             ]
         ];
-        $elResult = $el->post('documents/_search', [], json_encode($config));
+        $elResult = $this->request('documents/_search', $config);
         if (empty($elResult)) {
             throw new Exception('Response not eq array');
         }
         $projects2 = $this->get($elResult, 'form_id');
-        return array_unique(array_merge($projects1, $projects2));
+        // Comments
+        $config = [
+            'query' => [
+                'bool' => [
+                    'must' => [
+                        [
+                            'match' => [
+                                'user_id' => $params['user_id']
+                            ],
+                        ],
+                        [
+                            'match' => [
+                                'organisation_id' => $params['organization_id']
+                            ]
+                        ],
+                        [
+                            'more_like_this' => [
+                                'fields' => ['comment'],
+                                'like'   => [$params['search']],
+                                'min_term_freq' => 1,
+                                'min_doc_freq' => 1
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ];
+        $comments = $this->request('comments/_search', $config);
+        if (empty($comments)) {
+            throw new Exception('Response not eq array');
+        }
+        $config = [
+            'query' => [
+                'bool' => [
+                    'must' => [
+                        [
+                            'match' => [
+                                'user_id' => $params['user_id']
+                            ],
+                        ],
+                        [
+                            'match' => [
+                                'organisation_id' => $params['organization_id']
+                            ]
+                        ],
+                        [
+                            'more_like_this' => [
+                                'fields' => ['comment'],
+                                'like'   => [$params['search']],
+                                'min_term_freq' => 1,
+                                'min_doc_freq' => 1
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ];
+        $chats = $this->request('chats/_search', $config);
+        if (empty($comments)) {
+            throw new Exception('Response not eq array');
+        }
+        return [
+            'projects' => array_unique(array_merge($projects1, $projects2)),
+            'comments' => $comments['hits'],
+            'chats'    => $chats['hits']
+        ];
     }
 
     protected function get(array $data, string $field) : array
@@ -139,5 +204,17 @@ class DocumentsSearchModel extends AbstractSearch
         return array_filter(ArrayHelper::getColumn($data, function ($element) use ($field) {
              return ArrayHelper::getValue($element, '_source.' . $field);
         }));
+    }
+
+    public function request(string $url, array $config): array
+    {
+        $cli = new Client([
+            // Base URI is used with relative requests
+            'base_uri' => 'elasticsearch:9200',
+            // You can set any number of default request options.
+            'headers'  => ['content-type' => 'application/json', 'Accept' => 'application/json'],
+        ]);
+        $r = $cli->post($url, ['body' => json_encode($config)]);
+        return \GuzzleHttp\json_decode($r->getBody()->getContents(), true);
     }
 }
