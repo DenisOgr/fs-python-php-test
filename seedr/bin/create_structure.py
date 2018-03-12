@@ -17,7 +17,7 @@ for core in cores:
     with open("core_configs/%s"%core, 'r') as stream:
         body = stream.read()
 
-    es.indices.create(index=conf[core], body=body)
+    es.indices.create(index=conf[core], body=body, request_timeout=60)
 
 
 
