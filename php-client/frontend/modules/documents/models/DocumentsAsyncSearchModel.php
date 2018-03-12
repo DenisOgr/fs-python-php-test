@@ -2,6 +2,7 @@
 
 namespace frontend\modules\documents\models;
 
+use Faker\Factory;
 use frontend\models\AbstractSearch;
 use GuzzleHttp\Client;
 use GuzzleHttp\Promise\PromiseInterface;
@@ -14,6 +15,9 @@ class DocumentsAsyncSearchModel extends AbstractSearch
     /** @var Client $cli */
     protected $cli;
 
+    /** @var Factory $faker */
+    protected $faker;
+
     protected $promise = [];
 
     public function init()
@@ -24,10 +28,13 @@ class DocumentsAsyncSearchModel extends AbstractSearch
             // You can set any number of default request options.
             'headers'  => ['content-type' => 'application/json', 'Accept' => 'application/json'],
         ]);
+
+        $this->faker = Factory::create();
     }
 
     public function search(array $params): array
     {
+        $params['search']          = (empty($params['search']))? $this->faker->word : $params['user_id'];
         $params['user_id']         = (empty($params['user_id']))? rand(0, \Yii::$app->params['random']['user_id']) : $params['user_id'];
         $params['organization_id'] = (empty($params['organisation_id'])) ? rand(0, \Yii::$app->params['random']['organisation_id']) : $params['organisation_id'];
         // FORMS 1
