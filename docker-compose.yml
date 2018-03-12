@@ -58,6 +58,20 @@ services:
       - ./python-client:/app
     networks:
       - esnet
+  php-cli:
+    build: ./php-client
+    tty: true
+    ports:
+      - "89:80"
+    expose:
+      - "9000"
+      - "443"
+    volumes:
+        - ./php-client:/var/www/php-cli
+    links:
+        - elasticsearch
+    networks:
+        - esnet
 volumes:
   esdata1:
     driver: local
