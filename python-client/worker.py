@@ -28,7 +28,6 @@ class Worker:
 
     def get_user_documents_by_title(self, elastic, user_id, query, index, doc_type, q):
         print(time.time())
-        time.sleep(2)
         query = {
             'query': {
                 'bool': {
