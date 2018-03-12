@@ -11,8 +11,8 @@ class DocumentsSearchModel extends AbstractSearch
 {
     public function search(array $params): array
     {
-        $params['user_id']         = rand(0, \Yii::$app->params['random']['user_id']);
-        $params['organization_id'] = rand(0, \Yii::$app->params['random']['organisation_id']);
+        $params['user_id']         = (empty($params['user_id']))? rand(0, \Yii::$app->params['random']['user_id']) : $params['user_id'];
+        $params['organization_id'] = (empty($params['organisation_id'])) ? rand(0, \Yii::$app->params['random']['organisation_id']) : $params['organisation_id'];
         // FORMS 1
         $config = [
             'query' => [
@@ -158,9 +158,40 @@ class DocumentsSearchModel extends AbstractSearch
         if (empty($comments)) {
             throw new Exception('Response not eq array');
         }
+        $config = [
+            'query' => [
+                'bool' => [
+                    'must' => [
+                        [
+                            'match' => [
+                                'user_id' => $params['user_id']
+                            ],
+                        ],
+                        [
+                            'match' => [
+                                'organisation_id' => $params['organization_id']
+                            ]
+                        ],
+                        [
+                            'more_like_this' => [
+                                'fields' => ['comment'],
+                                'like'   => [$params['search']],
+                                'min_term_freq' => 1,
+                                'min_doc_freq' => 1
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ];
+        $chats = $this->request('chats/_search', $config);
+        if (empty($comments)) {
+            throw new Exception('Response not eq array');
+        }
         return [
             'projects' => array_unique(array_merge($projects1, $projects2)),
-            'comments' => $comments['hits']
+            'comments' => $comments['hits'],
+            'chats'    => $chats['hits']
         ];
     }
 
