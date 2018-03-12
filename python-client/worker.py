@@ -225,7 +225,7 @@ def process(title, user_id, organization_id):
     documents_process.join()
     documents = documents_queue.get()
 
-    user_form_content = get_user_form_content(esastic, documents, title, 'form_content', 'doc')
+    user_form_content = get_user_form_content(esastic, documents, title, 'form_contents', 'doc')
     user_projects_by_content = get_user_projects_by_forms(esastic, user_form_content, user_id, 'documents', 'doc')
 
     projects = np.unique(np.concatenate([user_projects_by_content, documents_by_title]))
