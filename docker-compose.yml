@@ -54,6 +54,18 @@ services:
       - elasticsearch
     volumes:
       - .:/app
+  php-cli:
+    build: ./php-client
+    tty: true
+    ports:
+      - "89:80"
+    expose:
+      - "9000"
+      - "443"
+    volumes:
+        - .:/var/www/php-cli
+    links:
+        - elasticsearch
 volumes:
   esdata1:
     driver: local
