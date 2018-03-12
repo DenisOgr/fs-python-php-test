@@ -54,6 +54,8 @@ services:
       - elasticsearch
     volumes:
       - .:/app
+    networks:
+      - esnet
 volumes:
   esdata1:
     driver: local
