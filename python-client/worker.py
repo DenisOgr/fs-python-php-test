@@ -13,7 +13,7 @@ class Worker:
     def get_elastic(self):
         return Elasticsearch([{'host': env.ELASTIC_HOST, 'port': env.ELASTIC_PORT}])
 
-    def get_user_documents(self, elastic, user_id, query, index, doc_type, q):
+    def get_user_documents(self, elastic, user_id, index, doc_type, q):
         query = {
             'query': {
                 'match': {
@@ -23,11 +23,8 @@ class Worker:
         }
 
         documents = self._get_documents(elastic, index, doc_type, query, 'form_id')
-        user_form_content = self.get_user_form_content(elastic, documents, query, env.ELASTIC_FORMS_INDEX, env.ELASTIC_CORE)
-        user_projects_by_content = self.get_user_projects_by_forms(elastic, user_form_content, user_id,
-                                                              env.ELASTIC_DOCUMENTS_INDEX, env.ELASTIC_CORE)
 
-        q.put(user_projects_by_content)
+        q.put(documents)
 
     def get_user_documents_by_title(self, elastic, user_id, query, index, doc_type, q):
         query = {
@@ -232,7 +229,7 @@ class Worker:
         documents_queue = Queue()
         documents_process = Thread(target=self.get_user_documents,
                                     args=(
-                                    elastic, user_id, title, env.ELASTIC_DOCUMENTS_INDEX, env.ELASTIC_CORE, documents_queue,))
+                                    elastic, user_id, env.ELASTIC_DOCUMENTS_INDEX, env.ELASTIC_CORE, documents_queue,))
         documents_process.start()
 
         # user documents by query and user_id
@@ -274,6 +271,10 @@ class Worker:
         chats = chats_queue.get()
         documents = documents_queue.get()
 
-        projects = np.unique(np.concatenate([documents, documents_by_title, public_documents]))
+        user_form_content = self.get_user_form_content(elastic, documents, title, env.ELASTIC_FORMS_INDEX, env.ELASTIC_CORE)
+        user_projects_by_content = self.get_user_projects_by_forms(elastic, user_form_content, user_id,
+                                                              env.ELASTIC_DOCUMENTS_INDEX, env.ELASTIC_CORE)
+
+        projects = np.unique(np.concatenate([user_projects_by_content, documents_by_title, public_documents]))
 
         return self._get_result(projects, comments, chats)
