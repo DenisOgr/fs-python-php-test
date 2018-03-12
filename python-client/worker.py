@@ -4,7 +4,8 @@ import numpy as np
 import json
 from multiprocessing import Process,Queue
 import time
-
+from faker import Faker
+import random
 
 def get_elastic():
     return Elasticsearch([{'host': env.ELASTIC_HOST, 'port': env.ELASTIC_PORT}])
@@ -208,7 +209,13 @@ def _get_documents(elastic, index, doc_type, query, filter_field, get_hits=False
     return documents
 
 
-def process(title, user_id, organization_id):
+def process():
+    fake = Faker()
+
+    title = fake.sentence(nb_words=2)
+    user_id = random.randint(0, 10000)
+    organization_id = random.randint(0, 1000)
+
     esastic = get_elastic()
 
     documents_by_title_queue = Queue()
@@ -235,4 +242,5 @@ def process(title, user_id, organization_id):
     }
 
 
-result = process('meet', 30, 100)
+result = process()
+print(result)
