@@ -32,11 +32,6 @@ class DocumentsSearchModel extends AbstractSearch
                             'match' => [
                                 'user_id' => $params['user_id']
                             ],
-                        ],
-                        [
-                            'match' => [
-                                'organisation_id' => $params['organization_id']
-                            ]
                         ]
                     ]
                 ]
@@ -56,11 +51,6 @@ class DocumentsSearchModel extends AbstractSearch
                             'match' => [
                                 'user_id' => $params['user_id']
                             ],
-                        ],
-                        [
-                            'match' => [
-                                'organisation_id' => $params['organization_id']
-                            ]
                         ],
                         [
                             'more_like_this' => [
@@ -119,11 +109,6 @@ class DocumentsSearchModel extends AbstractSearch
                             ],
                         ],
                         [
-                            'match' => [
-                                'organisation_id' => $params['organization_id']
-                            ]
-                        ],
-                        [
                             'terms' =>  [
                                 'form_id' => $forms2
                             ]
@@ -146,11 +131,6 @@ class DocumentsSearchModel extends AbstractSearch
                             'match' => [
                                 'user_id' => $params['user_id']
                             ],
-                        ],
-                        [
-                            'match' => [
-                                'organisation_id' => $params['organization_id']
-                            ]
                         ],
                         [
                             'more_like_this' => [
@@ -176,11 +156,6 @@ class DocumentsSearchModel extends AbstractSearch
                             'match' => [
                                 'user_id' => $params['user_id']
                             ],
-                        ],
-                        [
-                            'match' => [
-                                'organisation_id' => $params['organization_id']
-                            ]
                         ],
                         [
                             'more_like_this' => [
