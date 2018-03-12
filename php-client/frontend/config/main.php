@@ -40,7 +40,8 @@ return [
             'enablePrettyUrl' => true,
             'showScriptName'  => false,
             'rules' => [
-                '/documents' => 'documents/documents/view'
+                '/documents' => 'documents/documents/view',
+                '/documents-async' => 'documents/documents-async/view'
             ],
         ],
     ],
