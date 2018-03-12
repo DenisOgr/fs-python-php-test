@@ -284,8 +284,3 @@ class Worker:
         projects = np.unique(np.concatenate([user_projects_by_content, documents_by_title, public_documents]))
 
         return self._get_result(projects, comments, chats)
-
-
-worker = Worker()
-result = worker.process()
-print(result)

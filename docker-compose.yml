@@ -45,7 +45,9 @@ services:
     networks:
       - esnet
   python_client:
-    build: ./python-client
+    build:
+      context: ./python-client
+      dockerfile: Dockerfile
     restart: always
     tty: true
     ports:
@@ -53,7 +55,7 @@ services:
     links:
       - elasticsearch
     volumes:
-      - .:/app
+      - ./python-client:/app
     networks:
       - esnet
 volumes:
