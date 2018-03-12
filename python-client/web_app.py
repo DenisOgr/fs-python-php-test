@@ -1,5 +1,5 @@
 from aiohttp import web
-#from worker import Worker
+from worker import Worker
 import json
 
 
@@ -10,12 +10,12 @@ async def index(request):
 
     return web.Response(text=json.dumps(commands))
 
-# async def get_result(request):
-#     worker = Worker()
-#     result = worker.process()
-#
-#     return web.Response(text=result)
+async def get_result(request):
+    worker = Worker()
+    result = worker.process()
+
+    return web.Response(text=result)
 
 web_app = web.Application()
 web_app.router.add_get('/', index)
-#web_app.router.add_get('/get_result', get_result)
+web_app.router.add_get('/get_result', get_result)
