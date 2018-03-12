@@ -5,18 +5,32 @@ namespace frontend\modules\documents\models;
 use Faker\Factory;
 use frontend\models\AbstractSearch;
 use GuzzleHttp\Client;
+use GuzzleHttp\Promise\PromiseInterface;
+use function GuzzleHttp\Promise\unwrap;
 use yii\helpers\ArrayHelper;
 use Exception;
 
-class DocumentsSearchModel extends AbstractSearch
+class DocumentsAsyncSearchModel extends AbstractSearch
 {
+    /** @var Client $cli */
+    protected $cli;
+
+    /** @var Factory $faker */
     protected $faker;
+
+    protected $promise = [];
 
     public function init()
     {
+        $this->cli = new Client([
+            // Base URI is used with relative requests
+            'base_uri' => 'elasticsearch:9200',
+            // You can set any number of default request options.
+            'headers'  => ['content-type' => 'application/json', 'Accept' => 'application/json'],
+        ]);
+
         $this->faker = Factory::create();
     }
-
 
     public function search(array $params): array
     {
@@ -37,11 +51,7 @@ class DocumentsSearchModel extends AbstractSearch
                 ]
             ]
         ];
-        $elResult = $this->request('documents/_search', $config);
-        if (empty($elResult)) {
-            throw new Exception('Response not eq array');
-        }
-        $forms1 = $this->get($elResult, 'form_id');
+        $this->promise['forms_1'] = $this->cli->postAsync('documents/_search', ['body' => json_encode($config)]);
         // PROJECTS 1
         $config = [
             'query' => [
@@ -64,12 +74,63 @@ class DocumentsSearchModel extends AbstractSearch
                 ]
             ]
         ];
-        $elResult = $this->request('documents/_search', $config);
-        if (empty($elResult)) {
-            throw new Exception('Response not eq array');
-        }
-        $projects1 = $this->get($elResult, 'project_id');
+        $this->promise['projects_1'] = $this->cli->postAsync('documents/_search', ['body' => json_encode($config)]);
 
+        // Comments
+        $config = [
+            'query' => [
+                'bool' => [
+                    'must' => [
+                        [
+                            'match' => [
+                                'user_id' => $params['user_id']
+                            ],
+                        ],
+                        [
+                            'more_like_this' => [
+                                'fields' => ['comment'],
+                                'like'   => [$params['search']],
+                                'min_term_freq' => 1,
+                                'min_doc_freq' => 1
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ];
+        $this->promise['comments'] = $this->cli->postAsync('comments/_search', ['body' => json_encode($config)]);
+
+        $config = [
+            'query' => [
+                'bool' => [
+                    'must' => [
+                        [
+                            'match' => [
+                                'user_id' => $params['user_id']
+                            ],
+                        ],
+                        [
+                            'more_like_this' => [
+                                'fields' => ['comment'],
+                                'like'   => [$params['search']],
+                                'min_term_freq' => 1,
+                                'min_doc_freq' => 1
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ];
+        $this->promise['chats'] = $this->cli->postAsync('chats/_search', ['body' => json_encode($config)]);
+        $results = unwrap($this->promise);
+
+        $results['forms_1']     = \GuzzleHttp\json_decode($results['forms_1']->getBody()->getContents(), true);
+        $results['projects_1']  = \GuzzleHttp\json_decode($results['projects_1']->getBody()->getContents(), true);
+        $results['comments']    = \GuzzleHttp\json_decode($results['comments']->getBody()->getContents(), true);
+        $results['chats']       = \GuzzleHttp\json_decode($results['chats']->getBody()->getContents(), true);
+
+        $forms1    = $this->get($results['forms_1'], 'form_id');
+        $projects1 = $this->get($results['projects_1'], 'project_id');
         // FORMS 2
 
         $config = [
@@ -122,61 +183,11 @@ class DocumentsSearchModel extends AbstractSearch
             throw new Exception('Response not eq array');
         }
         $projects2 = $this->get($elResult, 'form_id');
-        // Comments
-        $config = [
-            'query' => [
-                'bool' => [
-                    'must' => [
-                        [
-                            'match' => [
-                                'user_id' => $params['user_id']
-                            ],
-                        ],
-                        [
-                            'more_like_this' => [
-                                'fields' => ['comment'],
-                                'like'   => [$params['search']],
-                                'min_term_freq' => 1,
-                                'min_doc_freq' => 1
-                            ]
-                        ]
-                    ]
-                ]
-            ]
-        ];
-        $comments = $this->request('comments/_search', $config);
-        if (empty($comments)) {
-            throw new Exception('Response not eq array');
-        }
-        $config = [
-            'query' => [
-                'bool' => [
-                    'must' => [
-                        [
-                            'match' => [
-                                'user_id' => $params['user_id']
-                            ],
-                        ],
-                        [
-                            'more_like_this' => [
-                                'fields' => ['comment'],
-                                'like'   => [$params['search']],
-                                'min_term_freq' => 1,
-                                'min_doc_freq' => 1
-                            ]
-                        ]
-                    ]
-                ]
-            ]
-        ];
-        $chats = $this->request('chats/_search', $config);
-        if (empty($comments)) {
-            throw new Exception('Response not eq array');
-        }
+
         return [
             'projects' => array_unique(array_merge($projects1, $projects2)),
-            'comments' => $comments['hits'],
-            'chats'    => $chats['hits']
+            'comments' => $results['comments'],
+            'chats'    => $results['chats'],
         ];
     }
 
@@ -193,13 +204,7 @@ class DocumentsSearchModel extends AbstractSearch
 
     public function request(string $url, array $config): array
     {
-        $cli = new Client([
-            // Base URI is used with relative requests
-            'base_uri' => 'elasticsearch:9200',
-            // You can set any number of default request options.
-            'headers'  => ['content-type' => 'application/json', 'Accept' => 'application/json'],
-        ]);
-        $r = $cli->post($url, ['body' => json_encode($config)]);
+        $r = $this->cli->post($url, ['body' => json_encode($config)]);
         return \GuzzleHttp\json_decode($r->getBody()->getContents(), true);
     }
 }
