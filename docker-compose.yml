@@ -17,6 +17,22 @@ services:
       - 9200:9200
     networks:
       - esnet
+  elasticsearch2:
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.2.2
+    container_name: elasticsearch2
+    environment:
+      - cluster.name=docker-cluster
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "discovery.zen.ping.unicast.hosts=elasticsearch"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - esdata2:/usr/share/elasticsearch/data
+    networks:
+      - esnet
   seedr:
     container_name: seedr
     build: ./seedr
@@ -29,7 +45,9 @@ services:
     networks:
       - esnet
   python_client:
-    build: ./python-client
+    build:
+      context: ./python-client
+      dockerfile: Dockerfile
     restart: always
     tty: true
     ports:
@@ -37,21 +55,9 @@ services:
     links:
       - elasticsearch
     volumes:
-      - .:/app
-  php-cli:
-    build: ./php-client
-    tty: true
-    ports:
-      - "89:80"
-    expose:
-      - "9000"
-      - "443"
-    volumes:
-        - ./php-client:/var/www/php-cli
-    links:
-        - elasticsearch
+      - ./python-client:/app
     networks:
-        - esnet
+      - esnet
 volumes:
   esdata1:
     driver: local

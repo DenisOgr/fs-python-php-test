@@ -5,7 +5,7 @@ from elasticsearch import Elasticsearch
 import random
 from collections import deque
 import time
-thread_count = 10
+thread_count = 4
 cores = [
     'elasticsearch_document_core',
     'elasticsearch_form_contents_core',
