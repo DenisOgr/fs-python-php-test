@@ -37,7 +37,7 @@ abstract class AbstractApiController extends Controller
 
     public function validate()
     {
-        $requiredKey = ['user_id', 'organization_id', 'search'];
+        $requiredKey = ['search'];
         foreach ($requiredKey as $item) {
             if (!isset(Yii::$app->request->queryParams[$item])) {
                 throw new Exception('Not validate key:' . $item);

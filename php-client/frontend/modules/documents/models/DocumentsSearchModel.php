@@ -11,6 +11,8 @@ class DocumentsSearchModel extends AbstractSearch
 {
     public function search(array $params): array
     {
+        $params['user_id']         = rand(0, \Yii::$app->params['random']['user_id']);
+        $params['organization_id'] = rand(0, \Yii::$app->params['random']['organisation_id']);
         // FORMS 1
         $config = [
             'query' => [
