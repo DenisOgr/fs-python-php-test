@@ -271,7 +271,7 @@ class Worker:
         chats_queue = Queue()
         chats_process = Process(target=self.get_user_chats,
                                 args=(
-                                elastic, env.ELASTIC_COMMENTS_INDEX, env.ELASTIC_CORE, chats_queue, user_id, title))
+                                elastic, env.ELASTIC_CHATS_INDEX, env.ELASTIC_CORE, chats_queue, user_id, title))
 
         chats_process.start()
         chats_process.join()
