@@ -46,11 +46,6 @@ class DocumentsAsyncSearchModel extends AbstractSearch
                             'match' => [
                                 'user_id' => $params['user_id']
                             ],
-                        ],
-                        [
-                            'match' => [
-                                'organisation_id' => $params['organization_id']
-                            ]
                         ]
                     ]
                 ]
@@ -66,11 +61,6 @@ class DocumentsAsyncSearchModel extends AbstractSearch
                             'match' => [
                                 'user_id' => $params['user_id']
                             ],
-                        ],
-                        [
-                            'match' => [
-                                'organisation_id' => $params['organization_id']
-                            ]
                         ],
                         [
                             'more_like_this' => [
@@ -97,11 +87,6 @@ class DocumentsAsyncSearchModel extends AbstractSearch
                             ],
                         ],
                         [
-                            'match' => [
-                                'organisation_id' => $params['organization_id']
-                            ]
-                        ],
-                        [
                             'more_like_this' => [
                                 'fields' => ['comment'],
                                 'like'   => [$params['search']],
@@ -123,11 +108,6 @@ class DocumentsAsyncSearchModel extends AbstractSearch
                             'match' => [
                                 'user_id' => $params['user_id']
                             ],
-                        ],
-                        [
-                            'match' => [
-                                'organisation_id' => $params['organization_id']
-                            ]
                         ],
                         [
                             'more_like_this' => [
@@ -188,11 +168,6 @@ class DocumentsAsyncSearchModel extends AbstractSearch
                             'match' => [
                                 'user_id' => $params['user_id']
                             ],
-                        ],
-                        [
-                            'match' => [
-                                'organisation_id' => $params['organization_id']
-                            ]
                         ],
                         [
                             'terms' =>  [
