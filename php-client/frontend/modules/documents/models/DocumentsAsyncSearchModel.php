@@ -34,9 +34,9 @@ class DocumentsAsyncSearchModel extends AbstractSearch
 
     public function search(array $params): array
     {
-        $params['search']          = (empty($params['search']))? $this->faker->word : $params['search'];
-        $params['user_id']         = (empty($params['user_id']))? rand(0, \Yii::$app->params['random']['user_id']) : $params['user_id'];
-        $params['organization_id'] = (empty($params['organisation_id'])) ? rand(0, \Yii::$app->params['random']['organisation_id']) : $params['organisation_id'];
+        $search       = (empty($params['search']))? $this->faker->word : $params['search'];
+        $userId       = (empty($params['user_id']))? rand(0, \Yii::$app->params['random']['user_id']) : $params['user_id'];
+        $organisation = (empty($params['organisation_id'])) ? rand(0, \Yii::$app->params['random']['organisation_id']) : $params['organisation_id'];
         // FORMS 1
         $config = [
             'query' => [
@@ -44,7 +44,7 @@ class DocumentsAsyncSearchModel extends AbstractSearch
                     'must' => [
                         [
                             'match' => [
-                                'user_id' => $params['user_id']
+                                'user_id' => $userId
                             ],
                         ]
                     ]
@@ -59,13 +59,13 @@ class DocumentsAsyncSearchModel extends AbstractSearch
                     'must' => [
                         [
                             'match' => [
-                                'user_id' => $params['user_id']
+                                'user_id' => $userId
                             ],
                         ],
                         [
                             'more_like_this' => [
                                 'fields' => ['file_name'],
-                                'like'   => [$params['search']],
+                                'like'   => [$search],
                                 'min_term_freq' => 1,
                                 'min_doc_freq' => 1
                             ]
@@ -83,13 +83,13 @@ class DocumentsAsyncSearchModel extends AbstractSearch
                     'must' => [
                         [
                             'match' => [
-                                'user_id' => $params['user_id']
+                                'user_id' => $userId
                             ],
                         ],
                         [
                             'more_like_this' => [
                                 'fields' => ['comment'],
-                                'like'   => [$params['search']],
+                                'like'   => [$search],
                                 'min_term_freq' => 1,
                                 'min_doc_freq' => 1
                             ]
@@ -106,13 +106,13 @@ class DocumentsAsyncSearchModel extends AbstractSearch
                     'must' => [
                         [
                             'match' => [
-                                'user_id' => $params['user_id']
+                                'user_id' => $userId
                             ],
                         ],
                         [
                             'more_like_this' => [
                                 'fields' => ['comment'],
-                                'like'   => [$params['search']],
+                                'like'   => [$search],
                                 'min_term_freq' => 1,
                                 'min_doc_freq' => 1
                             ]
@@ -122,15 +122,53 @@ class DocumentsAsyncSearchModel extends AbstractSearch
             ]
         ];
         $this->promise['chats'] = $this->cli->postAsync('chats/_search', ['body' => json_encode($config)]);
+
+        $config = [
+            'query' => [
+                'bool' => [
+                    'must' => [
+                        [
+                            'match' => [
+                                'organisation_id' => $organisation
+                            ],
+                        ],
+                        [
+                            'match' => [
+                                'is_public' => true
+                            ],
+                        ],
+                        [
+                            'more_like_this' => [
+                                'fields' => ['file_name'],
+                                'like'   => [$search],
+                                'min_term_freq' => 1,
+                                'min_doc_freq' => 1
+                            ]
+                        ]
+                    ],
+                    'must_not' => [
+                        [
+                            'term' => [
+                                'user_id' => $userId
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ];
+        $this->promise['projects_3'] = $this->cli->postAsync('documents/_search', ['body' => json_encode($config)]);
+
         $results = unwrap($this->promise);
 
         $results['forms_1']     = \GuzzleHttp\json_decode($results['forms_1']->getBody()->getContents(), true);
         $results['projects_1']  = \GuzzleHttp\json_decode($results['projects_1']->getBody()->getContents(), true);
+        $results['projects_3']  = \GuzzleHttp\json_decode($results['projects_3']->getBody()->getContents(), true);
         $results['comments']    = \GuzzleHttp\json_decode($results['comments']->getBody()->getContents(), true);
         $results['chats']       = \GuzzleHttp\json_decode($results['chats']->getBody()->getContents(), true);
 
         $forms1    = $this->get($results['forms_1'], 'form_id');
         $projects1 = $this->get($results['projects_1'], 'project_id');
+        $projects3 = $this->get($results['projects_3'], 'project_id');
         // FORMS 2
 
         $config = [
@@ -140,7 +178,7 @@ class DocumentsAsyncSearchModel extends AbstractSearch
                         [
                             'more_like_this' => [
                                 'fields' => ['description'],
-                                'like'   => [$params['search']],
+                                'like'   => [$search],
                                 'min_term_freq' => 1,
                                 'min_doc_freq' => 1
                             ]
@@ -166,7 +204,7 @@ class DocumentsAsyncSearchModel extends AbstractSearch
                     'must' => [
                         [
                             'match' => [
-                                'user_id' => $params['user_id']
+                                'user_id' => $userId
                             ],
                         ],
                         [
@@ -184,8 +222,10 @@ class DocumentsAsyncSearchModel extends AbstractSearch
         }
         $projects2 = $this->get($elResult, 'form_id');
 
+        $done = array_unique(array_merge($projects1, $projects2));
+        $done = array_unique(array_merge($done, $projects3));
         return [
-            'projects' => array_unique(array_merge($projects1, $projects2)),
+            'projects' => $done,
             'comments' => $results['comments'],
             'chats'    => $results['chats'],
         ];

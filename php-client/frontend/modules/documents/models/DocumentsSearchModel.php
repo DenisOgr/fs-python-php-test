@@ -20,9 +20,9 @@ class DocumentsSearchModel extends AbstractSearch
 
     public function search(array $params): array
     {
-        $params['search']          = (empty($params['search']))? $this->faker->word : $params['search'];
-        $params['user_id']         = (empty($params['user_id']))? rand(0, \Yii::$app->params['random']['user_id']) : $params['user_id'];
-        $params['organization_id'] = (empty($params['organisation_id'])) ? rand(0, \Yii::$app->params['random']['organisation_id']) : $params['organisation_id'];
+        $search       = (empty($params['search']))? $this->faker->word : $params['search'];
+        $userId       = (empty($params['user_id']))? rand(0, \Yii::$app->params['random']['user_id']) : $params['user_id'];
+        $organisation = (empty($params['organisation_id'])) ? rand(0, \Yii::$app->params['random']['organisation_id']) : $params['organisation_id'];
         // FORMS 1
         $config = [
             'query' => [
@@ -30,7 +30,7 @@ class DocumentsSearchModel extends AbstractSearch
                     'must' => [
                         [
                             'match' => [
-                                'user_id' => $params['user_id']
+                                'user_id' => $userId
                             ],
                         ]
                     ]
@@ -49,13 +49,13 @@ class DocumentsSearchModel extends AbstractSearch
                     'must' => [
                         [
                             'match' => [
-                                'user_id' => $params['user_id']
+                                'user_id' => $userId
                             ],
                         ],
                         [
                             'more_like_this' => [
                                 'fields' => ['file_name'],
-                                'like'   => [$params['search']],
+                                'like'   => [$search],
                                 'min_term_freq' => 1,
                                 'min_doc_freq' => 1
                             ]
@@ -79,7 +79,7 @@ class DocumentsSearchModel extends AbstractSearch
                         [
                             'more_like_this' => [
                                 'fields' => ['description'],
-                                'like'   => [$params['search']],
+                                'like'   => [$search],
                                 'min_term_freq' => 1,
                                 'min_doc_freq' => 1
                             ]
@@ -105,7 +105,7 @@ class DocumentsSearchModel extends AbstractSearch
                     'must' => [
                         [
                             'match' => [
-                                'user_id' => $params['user_id']
+                                'user_id' => $userId
                             ],
                         ],
                         [
@@ -129,13 +129,13 @@ class DocumentsSearchModel extends AbstractSearch
                     'must' => [
                         [
                             'match' => [
-                                'user_id' => $params['user_id']
+                                'user_id' => $userId
                             ],
                         ],
                         [
                             'more_like_this' => [
                                 'fields' => ['comment'],
-                                'like'   => [$params['search']],
+                                'like'   => [$search],
                                 'min_term_freq' => 1,
                                 'min_doc_freq' => 1
                             ]
@@ -154,13 +154,13 @@ class DocumentsSearchModel extends AbstractSearch
                     'must' => [
                         [
                             'match' => [
-                                'user_id' => $params['user_id']
+                                'user_id' => $userId
                             ],
                         ],
                         [
                             'more_like_this' => [
                                 'fields' => ['comment'],
-                                'like'   => [$params['search']],
+                                'like'   => [$search],
                                 'min_term_freq' => 1,
                                 'min_doc_freq' => 1
                             ]
@@ -173,8 +173,51 @@ class DocumentsSearchModel extends AbstractSearch
         if (empty($comments)) {
             throw new Exception('Response not eq array');
         }
+        // Projects 3
+        $config = [
+            'query' => [
+                'bool' => [
+                    'must' => [
+                        [
+                            'match' => [
+                                'organisation_id' => $organisation
+                            ],
+                        ],
+                        [
+                            'match' => [
+                                'is_public' => true
+                            ],
+                        ],
+                        [
+                            'more_like_this' => [
+                                'fields' => ['file_name'],
+                                'like'   => [$search],
+                                'min_term_freq' => 1,
+                                'min_doc_freq' => 1
+                            ]
+                        ]
+                    ],
+                    'must_not' => [
+                        [
+                            'term' => [
+                                'user_id' => $userId
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ];
+        $elResult = $this->request('documents/_search', $config);
+        if (empty($elResult)) {
+            throw new Exception('Response not eq array');
+        }
+        $projects3 = $this->get($elResult, 'project_id');
+
+        $done = array_unique(array_merge($projects1, $projects2));
+        $done = array_unique(array_merge($done, $projects3));
+
         return [
-            'projects' => array_unique(array_merge($projects1, $projects2)),
+            'projects' => $done,
             'comments' => $comments['hits'],
             'chats'    => $chats['hits']
         ];
