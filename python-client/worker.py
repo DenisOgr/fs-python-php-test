@@ -278,10 +278,6 @@ class Worker:
         chats = chats_queue.get()
         documents = documents_queue.get()
 
-        # user_form_content = self.get_user_form_content(elastic, documents, title, env.ELASTIC_FORMS_INDEX, env.ELASTIC_CORE)
-        # user_projects_by_content = self.get_user_projects_by_forms(elastic, user_form_content, user_id,
-        #                                                       env.ELASTIC_DOCUMENTS_INDEX, env.ELASTIC_CORE)
-
         projects = np.unique(np.concatenate([documents, documents_by_title, public_documents]))
 
         return self._get_result(projects, comments, chats)
