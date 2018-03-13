@@ -7,10 +7,12 @@ from faker import Faker
 import random
 from threading import Thread
 from helpers.words import DictProvider
+import requests
 
 
 class Worker:
     def get_elastic(self):
+        return True
         return Elasticsearch([{'host': env.ELASTIC_HOST, 'port': env.ELASTIC_PORT}])
 
     def get_user_documents(self, elastic, user_id, search_query, index, doc_type, q):
@@ -196,8 +198,11 @@ class Worker:
         queue.put(results)
 
     def _get_documents(self, elastic, index, doc_type, query, filter_field, get_hits=False):
-        result = elastic.search(index=index, doc_type=doc_type, body=query, size=env.DEFAULT_SIZE)
-
+        #result = elastic.search(index=index, doc_type=doc_type, body=query, size=env.DEFAULT_SIZE)
+        headers = {'content-type': 'application/json'}
+        result = requests.get('http://{}:{}/{}/{}/_search'.format(env.ELASTIC_HOST,env.ELASTIC_PORT,index,doc_type),
+                              headers=headers, data=json.dumps(query))
+        result = json.loads(result.text)
         documents = np.array([])
 
         if result['hits']['total'] == 0:
