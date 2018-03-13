@@ -296,5 +296,5 @@ class Worker:
 
         return self._get_result(projects, comments, chats)
 
-worker = Worker()
-print(worker.process())
+# worker = Worker()
+# print(worker.process())
