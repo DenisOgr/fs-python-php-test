@@ -11,16 +11,20 @@ use Exception;
 class DocumentsSearchModel extends AbstractSearch
 {
     protected $faker;
+    /** @var  ProviderFake */
+    protected $provider;
 
     public function init()
     {
+        $this->provider = new ProviderFake();
+
         $this->faker = Factory::create();
     }
 
 
     public function search(array $params): array
     {
-        $search       = (empty($params['search']))? $this->faker->word : $params['search'];
+        $search       = (empty($params['search']))? $this->provider->seed_fake_words() . ' ' . $this->faker->word : $params['search'];
         $userId       = (empty($params['user_id']))? rand(0, \Yii::$app->params['random']['user_id']) : $params['user_id'];
         $organisation = (empty($params['organisation_id'])) ? rand(0, \Yii::$app->params['random']['organisation_id']) : $params['organisation_id'];
         // FORMS 1
@@ -219,7 +223,12 @@ class DocumentsSearchModel extends AbstractSearch
         return [
             'projects' => $done,
             'comments' => $comments['hits'],
-            'chats'    => $chats['hits']
+            'chats'    => $chats['hits'],
+            'query'    => [
+                'user_id'           => $userId,
+                'organisation_id'   => $organisation,
+                'search'            => $search
+            ]
         ];
     }
 

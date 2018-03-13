@@ -18,6 +18,9 @@ class DocumentsAsyncSearchModel extends AbstractSearch
     /** @var Factory $faker */
     protected $faker;
 
+    /** @var ProviderFake $provider */
+    protected $provider;
+
     protected $promise = [];
 
     public function init()
@@ -29,12 +32,15 @@ class DocumentsAsyncSearchModel extends AbstractSearch
             'headers'  => ['content-type' => 'application/json', 'Accept' => 'application/json'],
         ]);
 
+        $this->provider = new ProviderFake();
+
         $this->faker = Factory::create();
+
     }
 
     public function search(array $params): array
     {
-        $search       = (empty($params['search']))? $this->faker->word : $params['search'];
+        $search       = (empty($params['search']))? $this->provider->seed_fake_words() . ' ' . $this->faker->word : $params['search'];
         $userId       = (empty($params['user_id']))? rand(0, \Yii::$app->params['random']['user_id']) : $params['user_id'];
         $organisation = (empty($params['organisation_id'])) ? rand(0, \Yii::$app->params['random']['organisation_id']) : $params['organisation_id'];
         // FORMS 1
@@ -228,6 +234,11 @@ class DocumentsAsyncSearchModel extends AbstractSearch
             'projects' => $done,
             'comments' => $results['comments'],
             'chats'    => $results['chats'],
+            'query'    => [
+                'user_id'           => $userId,
+                'organisation_id'   => $organisation,
+                'search'            => $search
+            ]
         ];
     }
 
