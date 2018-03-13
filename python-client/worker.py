@@ -6,6 +6,7 @@ from multiprocessing import Process,Queue
 import time
 from faker import Faker
 import random
+from threading import Thread
 
 
 class Worker:
@@ -105,6 +106,11 @@ class Worker:
                         {
                             'match': {
                                 'organisation_id': organisation_id
+                            }
+                        },
+                        {
+                            'match': {
+                                'is_public': True
                             }
                         },
                         {
@@ -223,26 +229,26 @@ class Worker:
         organisation_id = random.randint(0, 1000)
 
         elastic = self.get_elastic()
+        # user documents by user_id
+
+        documents_queue = Queue()
+        documents_process = Thread(target=self.get_user_documents,
+                                    args=(
+                                    elastic, user_id, env.ELASTIC_DOCUMENTS_INDEX, env.ELASTIC_CORE, documents_queue,))
+        documents_process.start()
 
         # user documents by query and user_id
 
         documents_by_title_queue = Queue()
-        documents_by_title_process = Process(target=self.get_user_documents_by_title,
+        documents_by_title_process = Thread(target=self.get_user_documents_by_title,
                                              args=(
                                              elastic, user_id, title, env.ELASTIC_DOCUMENTS_INDEX, env.ELASTIC_CORE,
                                              documents_by_title_queue,))
         documents_by_title_process.start()
-        # user documents by user_id
-
-        documents_queue = Queue()
-        documents_process = Process(target=self.get_user_documents,
-                                    args=(
-                                    elastic, user_id, env.ELASTIC_DOCUMENTS_INDEX, env.ELASTIC_CORE, documents_queue,))
-        documents_process.start()
         # public documents by org_id , query and user_id
 
         public_documents_queue = Queue()
-        public_documents_process = Process(target=self.get_public_documents,
+        public_documents_process = Thread(target=self.get_public_documents,
                                            args=(elastic, env.ELASTIC_DOCUMENTS_INDEX, env.ELASTIC_CORE,
                                                  public_documents_queue,
                                                  user_id, title, organisation_id))
@@ -250,32 +256,25 @@ class Worker:
 
         # user comments by user_id and query
         comments_queue = Queue()
-        comments_process = Process(target=self.get_user_comments,
+        comments_process = Thread(target=self.get_user_comments,
                                    args=(elastic, env.ELASTIC_COMMENTS_INDEX, env.ELASTIC_CORE, comments_queue, user_id,
                                          title))
         comments_process.start()
 
         # user chats by user_id and query
         chats_queue = Queue()
-        chats_process = Process(target=self.get_user_chats,
+        chats_process = Thread(target=self.get_user_chats,
                                 args=(
                                 elastic, env.ELASTIC_CHATS_INDEX, env.ELASTIC_CORE, chats_queue, user_id, title))
 
         chats_process.start()
 
-        # run joins
-        documents_by_title_process.join()
-        documents_process.join()
-        public_documents_process.join()
-        comments_process.join()
-        chats_process.join()
-
-        #get results
+        # get results
         documents_by_title = documents_by_title_queue.get()
-        documents = documents_queue.get()
         public_documents = public_documents_queue.get()
         comments = comments_queue.get()
         chats = chats_queue.get()
+        documents = documents_queue.get()
 
         user_form_content = self.get_user_form_content(elastic, documents, title, env.ELASTIC_FORMS_INDEX, env.ELASTIC_CORE)
         user_projects_by_content = self.get_user_projects_by_forms(elastic, user_form_content, user_id,
