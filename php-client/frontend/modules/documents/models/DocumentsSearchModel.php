@@ -11,16 +11,21 @@ use Exception;
 class DocumentsSearchModel extends AbstractSearch
 {
     protected $faker;
+    /** @var  ProviderFake */
+    protected $provider;
 
     public function init()
     {
+        $this->provider = new ProviderFake();
+
         $this->faker = Factory::create();
     }
 
 
     public function search(array $params): array
     {
-        $search       = (empty($params['search']))? $this->faker->word : $params['search'];
+        $count        = 0;
+        $search       = (empty($params['search']))? $this->provider->seed_fake_words() . ' ' . $this->faker->word : $params['search'];
         $userId       = (empty($params['user_id']))? rand(0, \Yii::$app->params['random']['user_id']) : $params['user_id'];
         $organisation = (empty($params['organisation_id'])) ? rand(0, \Yii::$app->params['random']['organisation_id']) : $params['organisation_id'];
         // FORMS 1
@@ -38,6 +43,7 @@ class DocumentsSearchModel extends AbstractSearch
             ]
         ];
         $elResult = $this->request('documents/_search', $config);
+        $count++;
         if (empty($elResult)) {
             throw new Exception('Response not eq array');
         }
@@ -65,6 +71,7 @@ class DocumentsSearchModel extends AbstractSearch
             ]
         ];
         $elResult = $this->request('documents/_search', $config);
+        $count++;
         if (empty($elResult)) {
             throw new Exception('Response not eq array');
         }
@@ -94,6 +101,7 @@ class DocumentsSearchModel extends AbstractSearch
             ]
         ];
         $elResult = $this->request('form_contents/_search', $config);
+        $count++;
         if (empty($elResult)) {
             throw new Exception('Response not eq array');
         }
@@ -118,6 +126,7 @@ class DocumentsSearchModel extends AbstractSearch
             ]
         ];
         $elResult = $this->request('documents/_search', $config);
+        $count++;
         if (empty($elResult)) {
             throw new Exception('Response not eq array');
         }
@@ -145,6 +154,7 @@ class DocumentsSearchModel extends AbstractSearch
             ]
         ];
         $comments = $this->request('comments/_search', $config);
+        $count++;
         if (empty($comments)) {
             throw new Exception('Response not eq array');
         }
@@ -170,6 +180,7 @@ class DocumentsSearchModel extends AbstractSearch
             ]
         ];
         $chats = $this->request('chats/_search', $config);
+        $count++;
         if (empty($comments)) {
             throw new Exception('Response not eq array');
         }
@@ -208,6 +219,7 @@ class DocumentsSearchModel extends AbstractSearch
             ]
         ];
         $elResult = $this->request('documents/_search', $config);
+        $count++;
         if (empty($elResult)) {
             throw new Exception('Response not eq array');
         }
@@ -219,7 +231,13 @@ class DocumentsSearchModel extends AbstractSearch
         return [
             'projects' => $done,
             'comments' => $comments['hits'],
-            'chats'    => $chats['hits']
+            'chats'    => $chats['hits'],
+            'query'    => [
+                'user_id'           => $userId,
+                'organisation_id'   => $organisation,
+                'search'            => $search,
+                'count_query'       => $count,
+            ]
         ];
     }
 

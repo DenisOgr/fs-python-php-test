@@ -18,6 +18,9 @@ class DocumentsAsyncSearchModel extends AbstractSearch
     /** @var Factory $faker */
     protected $faker;
 
+    /** @var ProviderFake $provider */
+    protected $provider;
+
     protected $promise = [];
 
     public function init()
@@ -29,12 +32,16 @@ class DocumentsAsyncSearchModel extends AbstractSearch
             'headers'  => ['content-type' => 'application/json', 'Accept' => 'application/json'],
         ]);
 
+        $this->provider = new ProviderFake();
+
         $this->faker = Factory::create();
+
     }
 
     public function search(array $params): array
     {
-        $search       = (empty($params['search']))? $this->faker->word : $params['search'];
+        $count        = 0;
+        $search       = (empty($params['search']))? $this->provider->seed_fake_words() . ' ' . $this->faker->word : $params['search'];
         $userId       = (empty($params['user_id']))? rand(0, \Yii::$app->params['random']['user_id']) : $params['user_id'];
         $organisation = (empty($params['organisation_id'])) ? rand(0, \Yii::$app->params['random']['organisation_id']) : $params['organisation_id'];
         // FORMS 1
@@ -159,7 +166,7 @@ class DocumentsAsyncSearchModel extends AbstractSearch
         $this->promise['projects_3'] = $this->cli->postAsync('documents/_search', ['body' => json_encode($config)]);
 
         $results = unwrap($this->promise);
-
+        $count++;
         $results['forms_1']     = \GuzzleHttp\json_decode($results['forms_1']->getBody()->getContents(), true);
         $results['projects_1']  = \GuzzleHttp\json_decode($results['projects_1']->getBody()->getContents(), true);
         $results['projects_3']  = \GuzzleHttp\json_decode($results['projects_3']->getBody()->getContents(), true);
@@ -193,6 +200,7 @@ class DocumentsAsyncSearchModel extends AbstractSearch
             ]
         ];
         $elResult = $this->request('form_contents/_search', $config);
+        $count++;
         if (empty($elResult)) {
             throw new Exception('Response not eq array');
         }
@@ -217,6 +225,7 @@ class DocumentsAsyncSearchModel extends AbstractSearch
             ]
         ];
         $elResult = $this->request('documents/_search', $config);
+        $count++;
         if (empty($elResult)) {
             throw new Exception('Response not eq array');
         }
@@ -228,6 +237,12 @@ class DocumentsAsyncSearchModel extends AbstractSearch
             'projects' => $done,
             'comments' => $results['comments'],
             'chats'    => $results['chats'],
+            'query'    => [
+                'user_id'           => $userId,
+                'organisation_id'   => $organisation,
+                'search'            => $search,
+                'count_query'       => $count,
+            ]
         ];
     }
 
