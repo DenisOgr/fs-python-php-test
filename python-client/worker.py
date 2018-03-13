@@ -65,7 +65,7 @@ class Worker:
                         },
                         {
                             'more_like_this': {
-                                'fields': ['file_name'],
+                                'fields': ['description'],
                                 'like': [query],
                                 'min_term_freq': 1,
                                 'min_doc_freq': 1
