@@ -15,10 +15,11 @@ def index():
 
 @web_flask.route("/get_result")
 def get_result():
-    worker = Worker()
-    result = worker.process()
+    print(1)
+    # worker = Worker()
+    # result = worker.process()
 
-    return Response(result, mimetype=u'application/json')
+    return Response({1}, mimetype=u'application/json')
 
 
 if __name__ == "__main__":

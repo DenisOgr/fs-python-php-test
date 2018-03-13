@@ -52,8 +52,8 @@ services:
     tty: true
     ports:
       - 65:80
-#    links:
-#      - elasticsearch
+    links:
+      - elasticsearch
     volumes:
       - ./python-client:/app
     networks:
