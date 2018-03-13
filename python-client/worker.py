@@ -109,6 +109,11 @@ class Worker:
                             }
                         },
                         {
+                            'match': {
+                                'is_public': True
+                            }
+                        },
+                        {
                             'more_like_this': {
                                 'fields': ['file_name'],
                                 'like': [query],
@@ -264,7 +269,7 @@ class Worker:
 
         chats_process.start()
 
-        #get results
+        # get results
         documents_by_title = documents_by_title_queue.get()
         public_documents = public_documents_queue.get()
         comments = comments_queue.get()
