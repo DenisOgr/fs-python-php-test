@@ -2,8 +2,7 @@ from elasticsearch import Elasticsearch
 import env
 import numpy as np
 import json
-from multiprocessing import Process,Queue
-import time
+from multiprocessing import Queue
 from faker import Faker
 import random
 from threading import Thread
