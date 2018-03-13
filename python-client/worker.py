@@ -26,7 +26,7 @@ class Worker:
         user_form_content = self.get_user_form_content(elastic, documents, search_query, env.ELASTIC_FORMS_INDEX, env.ELASTIC_CORE)
         user_projects_by_content = self.get_user_projects_by_forms(elastic, user_form_content, user_id,
                                                               env.ELASTIC_DOCUMENTS_INDEX, env.ELASTIC_CORE)
-
+        return user_projects_by_content
         q.put(user_projects_by_content)
 
     def get_user_documents_by_title(self, elastic, user_id, query, index, doc_type, q):
@@ -52,6 +52,7 @@ class Worker:
             },
         }
         documents = self._get_documents(elastic, index, doc_type, query, 'project_id')
+        return documents
         q.put(documents)
 
     def get_user_form_content(self, elastic, form_ids, query, index, doc_type):
@@ -137,7 +138,7 @@ class Worker:
         }
 
         documents = self._get_documents(elastic, index, doc_type, query, 'project_id')
-
+        return documents
         queue.put(documents)
 
     def get_user_comments(self, elastic, index, doc_type, queue, user_id, query):
@@ -164,7 +165,7 @@ class Worker:
         }
 
         results = self._get_documents(elastic, index, doc_type, query, False, True)
-
+        return results
         queue.put(results)
 
     def get_user_chats(self, elastic, index, doc_type, queue, user_id, query):
@@ -191,7 +192,7 @@ class Worker:
         }
 
         results = self._get_documents(elastic, index, doc_type, query, False, True)
-
+        return results
         queue.put(results)
 
     def _get_documents(self, elastic, index, doc_type, query, filter_field, get_hits=False):
@@ -235,51 +236,60 @@ class Worker:
         elastic = self.get_elastic()
         # user documents by user_id
 
-        documents_queue = Queue()
-        documents_process = Thread(target=self.get_user_documents,
-                                    args=(
-                                    elastic, user_id, title, env.ELASTIC_DOCUMENTS_INDEX, env.ELASTIC_CORE, documents_queue,))
-        documents_process.start()
+        # documents_queue = Queue()
+        # documents_process = Thread(target=self.get_user_documents,
+        #                             args=(
+        #                             elastic, user_id, title, env.ELASTIC_DOCUMENTS_INDEX, env.ELASTIC_CORE, documents_queue,))
+        # documents_process.start()
+        #
+        # # user documents by query and user_id
+        #
+        # documents_by_title_queue = Queue()
+        # documents_by_title_process = Thread(target=self.get_user_documents_by_title,
+        #                                      args=(
+        #                                      elastic, user_id, title, env.ELASTIC_DOCUMENTS_INDEX, env.ELASTIC_CORE,
+        #                                      documents_by_title_queue,))
+        # documents_by_title_process.start()
+        # # public documents by org_id , query and user_id
+        #
+        # public_documents_queue = Queue()
+        # public_documents_process = Thread(target=self.get_public_documents,
+        #                                    args=(elastic, env.ELASTIC_DOCUMENTS_INDEX, env.ELASTIC_CORE,
+        #                                          public_documents_queue,
+        #                                          user_id, title, organisation_id))
+        # public_documents_process.start()
+        #
+        # # user comments by user_id and query
+        # comments_queue = Queue()
+        # comments_process = Thread(target=self.get_user_comments,
+        #                            args=(elastic, env.ELASTIC_COMMENTS_INDEX, env.ELASTIC_CORE, comments_queue, user_id,
+        #                                  title))
+        # comments_process.start()
+        #
+        # # user chats by user_id and query
+        # chats_queue = Queue()
+        # chats_process = Thread(target=self.get_user_chats,
+        #                         args=(
+        #                         elastic, env.ELASTIC_CHATS_INDEX, env.ELASTIC_CORE, chats_queue, user_id, title))
+        #
+        # chats_process.start()
+        #
+        # # get results
+        # documents_by_title = documents_by_title_queue.get()
+        # public_documents = public_documents_queue.get()
+        # comments = comments_queue.get()
+        # chats = chats_queue.get()
+        # documents = documents_queue.get()
+        documents = self.get_user_documents(elastic,user_id,title,env.ELASTIC_DOCUMENTS_INDEX, env.ELASTIC_CORE, '')
+        documents_by_title = self.get_user_documents_by_title(elastic,user_id,title,env.ELASTIC_DOCUMENTS_INDEX, env.ELASTIC_CORE, '')
+        public_documents = self.get_public_documents(elastic, env.ELASTIC_DOCUMENTS_INDEX, env.ELASTIC_CORE,'',user_id, title, organisation_id)
+        comments = self.get_user_comments(elastic, env.ELASTIC_DOCUMENTS_INDEX, env.ELASTIC_CORE,'',user_id, title)
+        chats = self.get_user_chats(elastic, env.ELASTIC_CHATS_INDEX, env.ELASTIC_CORE, '', user_id, title)
 
-        # user documents by query and user_id
-
-        documents_by_title_queue = Queue()
-        documents_by_title_process = Thread(target=self.get_user_documents_by_title,
-                                             args=(
-                                             elastic, user_id, title, env.ELASTIC_DOCUMENTS_INDEX, env.ELASTIC_CORE,
-                                             documents_by_title_queue,))
-        documents_by_title_process.start()
-        # public documents by org_id , query and user_id
-
-        public_documents_queue = Queue()
-        public_documents_process = Thread(target=self.get_public_documents,
-                                           args=(elastic, env.ELASTIC_DOCUMENTS_INDEX, env.ELASTIC_CORE,
-                                                 public_documents_queue,
-                                                 user_id, title, organisation_id))
-        public_documents_process.start()
-
-        # user comments by user_id and query
-        comments_queue = Queue()
-        comments_process = Thread(target=self.get_user_comments,
-                                   args=(elastic, env.ELASTIC_COMMENTS_INDEX, env.ELASTIC_CORE, comments_queue, user_id,
-                                         title))
-        comments_process.start()
-
-        # user chats by user_id and query
-        chats_queue = Queue()
-        chats_process = Thread(target=self.get_user_chats,
-                                args=(
-                                elastic, env.ELASTIC_CHATS_INDEX, env.ELASTIC_CORE, chats_queue, user_id, title))
-
-        chats_process.start()
-
-        # get results
-        documents_by_title = documents_by_title_queue.get()
-        public_documents = public_documents_queue.get()
-        comments = comments_queue.get()
-        chats = chats_queue.get()
-        documents = documents_queue.get()
 
         projects = np.unique(np.concatenate([documents, documents_by_title, public_documents]))
 
         return self._get_result(projects, comments, chats)
+
+worker = Worker()
+print(worker.process())
