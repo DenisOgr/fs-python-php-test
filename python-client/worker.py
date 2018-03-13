@@ -7,6 +7,7 @@ from faker import Faker
 import random
 from threading import Thread
 from helpers.words import DictProvider
+import time
 
 
 class Worker:
@@ -14,6 +15,8 @@ class Worker:
         return Elasticsearch([{'host': env.ELASTIC_HOST, 'port': env.ELASTIC_PORT}])
 
     def get_user_documents(self, elastic, user_id, search_query, index, doc_type, q):
+        print(time.time())
+        print('documents')
         query = {
             'query': {
                 'match': {
@@ -30,6 +33,8 @@ class Worker:
         q.put(user_projects_by_content)
 
     def get_user_documents_by_title(self, elastic, user_id, query, index, doc_type, q):
+        print(time.time())
+        print('title')
         query = {
             'query': {
                 'bool': {
@@ -102,6 +107,8 @@ class Worker:
         return self._get_documents(elastic, index, doc_type, query, 'project_id')
 
     def get_public_documents(self, elastic, index, doc_type, queue, user_id, query, organisation_id):
+        print(time.time())
+        print('public')
         query = {
             'query': {
                 'bool': {
@@ -141,6 +148,8 @@ class Worker:
         queue.put(documents)
 
     def get_user_comments(self, elastic, index, doc_type, queue, user_id, query):
+        print(time.time())
+        print('comments')
         query = {
             'query': {
                 'bool': {
@@ -168,6 +177,8 @@ class Worker:
         queue.put(results)
 
     def get_user_chats(self, elastic, index, doc_type, queue, user_id, query):
+        print(time.time())
+        print('chats')
         query = {
             'query': {
                 'bool': {
@@ -225,13 +236,14 @@ class Worker:
         })
 
     def process(self):
+        print(time.time())
         fake = Faker()
         fake.add_provider(DictProvider)
 
         title = fake.sentence(nb_words=2) + ' ' + fake.seed_fake_words()
         user_id = random.randint(0, 10000)
         organisation_id = random.randint(0, 1000)
-
+        print(time.time())
         elastic = self.get_elastic()
         # user documents by user_id
 
@@ -283,3 +295,6 @@ class Worker:
         projects = np.unique(np.concatenate([documents, documents_by_title, public_documents]))
 
         return self._get_result(projects, comments, chats)
+
+worker = Worker()
+print(worker.process())
