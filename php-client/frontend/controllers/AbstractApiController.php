@@ -21,28 +21,12 @@ abstract class AbstractApiController extends Controller
     {
         /** @var JsonResponse $response */
         $response = Yii::createObject(JsonResponse::class);
-        try {
+
             /** @var AbstractSearch $searchModel */
             $searchModel = Yii::createObject($this->searchClassName());
             $response->status = JsonResponse::STATUS_SUCCESS;
-            $this->validate();
             $response->data = $searchModel->search(Yii::$app->request->queryParams);
             return $response->getResponse();
-        } catch (Exception $exception) {
-            $response->status  = JsonResponse::STATUS_ERROR;
-            $response->message = $exception->getMessage();
-            return $response->getResponse();
-        }
-    }
 
-    public function validate()
-    {
-        $requiredKey = [];
-        foreach ($requiredKey as $item) {
-            if (!isset(Yii::$app->request->queryParams[$item])) {
-                throw new Exception('Not validate key:' . $item);
-            }
-        }
-        return true;
     }
 }
