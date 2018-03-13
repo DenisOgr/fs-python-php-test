@@ -6,6 +6,7 @@ from multiprocessing import Queue
 from faker import Faker
 import random
 from threading import Thread
+from helpers.words import DictProvider
 
 
 class Worker:
@@ -225,8 +226,9 @@ class Worker:
 
     def process(self):
         fake = Faker()
+        fake.add_provider(DictProvider)
 
-        title = fake.sentence(nb_words=2)
+        title = fake.sentence(nb_words=2) + ' ' + fake.seed_fake_words()
         user_id = random.randint(0, 10000)
         organisation_id = random.randint(0, 1000)
 
